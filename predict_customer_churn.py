@@ -77,12 +77,12 @@ from sklearn.metrics import average_precision_score
 
 #Standard libraries for data visualization---------------------
 
+import matplotlib
+matplotlib.use('Agg')  # Set non-interactive backend for script execution
 import seaborn as sn
 from matplotlib import pyplot
 import matplotlib.pyplot as plt
 import matplotlib.pylab as pylab
-import matplotlib 
-# %matplotlib inline  # This is only for Jupyter notebooks
 color = sn.color_palette()
 import matplotlib.ticker as mtick
 # from IPython.display import display  # Not needed for regular Python scripts
@@ -111,6 +111,11 @@ import joblib
 #Step 2: Set up current working directory------------------------------------------
 
 os.chdir(r"/home/mahi/Documents/dm_cbp/")
+
+# Create outputs directory for saving plots and results
+if not os.path.exists('outputs'):
+    os.makedirs('outputs')
+print("Working directory set. Outputs will be saved to 'outputs/' folder.")
 
 
 # Step 3: Import the dataset--------------------------------------------------------
@@ -213,8 +218,10 @@ print('{} columns were label encoded.'.format(le_count))
 #----------------------------------------------------------------------------------------
 
 #Step 9: Exploratory Data Analysis----------------------------------------------------------------------
+print("\n=== Step 9: Starting Exploratory Data Analysis ===")
   
 #Step 9.1. Plot Histogram of numeric Columns--------------------------------------
+print("Step 9.1: Plotting histograms...")
 
 dataset2 = dataset[['gender', 'SeniorCitizen', 'Partner', 'Dependents',
        'tenure', 'PhoneService', 'PaperlessBilling',
@@ -235,12 +242,16 @@ for i in range(dataset2.shape[1]):
     
     plt.hist(dataset2.iloc[:, i], bins=vals, color = '#ec838a')
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+plt.savefig('outputs/01_histograms_numerical_columns.png', dpi=100, bbox_inches='tight')
+plt.close()
+print("  ✓ Saved: outputs/01_histograms_numerical_columns.png")
 
 
 #Step 9.2. Analyze distribution of Key Categorical Variables---------------------------------------------
- 
+print("Step 9.2: Analyzing categorical variable distributions...")
     
 #(1) Distribution of Contract Type----------------------------------------------------------------------------------------
+print("  Plotting contract type distribution...")
 
 contract_split = dataset[[ "customerID", "Contract"]]
 sectors = contract_split .groupby ("Contract")
@@ -277,9 +288,13 @@ def add_value_labels(ax, spacing=5):
             ha='center',                
             va=va)                                                             
 add_value_labels(ax)
+plt.savefig('outputs/02_contract_type_distribution.png', dpi=100, bbox_inches='tight')
+plt.close()
+print("  ✓ Saved: outputs/02_contract_type_distribution.png")
 
 
 #(2) Distribution of Payment Method Type---------------------------------------------------------------------------------------
+print("  Plotting payment method distribution...")
 
 payment_method_split = dataset[[ "customerID", "PaymentMethod"]]
 sectors = payment_method_split  .groupby ("PaymentMethod")
@@ -316,9 +331,13 @@ def add_value_labels(ax, spacing=5):
             ha='center',                
             va=va)                                                             
 add_value_labels(ax)
+plt.savefig('outputs/03_payment_method_distribution.png', dpi=100, bbox_inches='tight')
+plt.close()
+print("  ✓ Saved: outputs/03_payment_method_distribution.png")
 
 
 #(3) Distribution of various Label Encoded Categorical Variables---------------------------------------------------------------------------------------
+print("  Plotting service distributions...")
 
 services = ['PhoneService','MultipleLines','InternetService','OnlineSecurity',
            'OnlineBackup','DeviceProtection','TechSupport','StreamingTV','StreamingMovies']
@@ -334,16 +353,22 @@ for i, item in enumerate(services):
     elif i < 9:
         ax = dataset[item].value_counts().plot(kind = 'bar',ax=axes[i-6,2],rot = 0,color = '#ec838a')
     ax.set_title(item)
+plt.tight_layout()
+plt.savefig('outputs/04_services_distribution.png', dpi=100, bbox_inches='tight')
+plt.close()
+print("  ✓ Saved: outputs/04_services_distribution.png")
 
 
     
 #Step 9.3: Analyze Churn Rate by Categorical variables:   -------------------------------------------------------------
+print("Step 9.3: Analyzing churn rates...")
 
 #(1) Overall Churn Rate------------------------------------------------------------------------------------------
+print("  Calculating overall churn rate...")
 
 import matplotlib.ticker as mtick
-churn_rate = dataset[["Churn", "customerID"]]
-churn_rate ["churn_label"] = pd.Series(np.where((churn_rate["Churn"] == 0), "No", "Yes"))
+churn_rate = dataset[["Churn", "customerID"]].copy()
+churn_rate["churn_label"] = pd.Series(np.where((churn_rate["Churn"] == 0), "No", "Yes"))
 sectors = churn_rate .groupby ("churn_label")
 churn_rate = pd.DataFrame(sectors["customerID"].count())
 churn_rate ["Churn Rate"] = (churn_rate ["customerID"] / sum(churn_rate ["customerID"]) )*100
@@ -378,9 +403,13 @@ def add_value_labels(ax, spacing=5):
             va=va)                                                            
 add_value_labels(ax)
 ax.autoscale(enable=False, axis='both', tight=False)  
+plt.savefig('outputs/05_overall_churn_rate.png', dpi=100, bbox_inches='tight')
+plt.close()
+print("  ✓ Saved: outputs/05_overall_churn_rate.png")
 
 
 #(2) Churn Rate by Contract Type ----------------------------------------------------------------------------------------
+print("  Analyzing churn by contract type...")
 
 
 import matplotlib.ticker as mtick
@@ -418,10 +447,14 @@ for p in ax.patches:
             horizontalalignment='center', 
             verticalalignment='center')
 ax.autoscale(enable=False, axis='both', tight=False)   
+plt.savefig('outputs/06_churn_by_contract_type.png', dpi=100, bbox_inches='tight')
+plt.close()
+print("  ✓ Saved: outputs/06_churn_by_contract_type.png")
 
 
 
 #(3) Churn Rate by Payment Method Type----------------------------------------------------------------------------------------
+print("  Analyzing churn by payment method...")
 
 
 import matplotlib.ticker as mtick
@@ -459,9 +492,13 @@ for p in ax.patches:
             horizontalalignment='center', 
             verticalalignment='center')
 ax.autoscale(enable=False, axis='both', tight=False)   
+plt.savefig('outputs/07_churn_by_payment_method.png', dpi=100, bbox_inches='tight')
+plt.close()
+print("  ✓ Saved: outputs/07_churn_by_payment_method.png")
 
 
 # Step 9.4. Find positive and negative correlations with the Response Variable--------------------
+print("Step 9.4: Analyzing correlations...")
 
 dataset2 = dataset[['SeniorCitizen', 'Partner', 'Dependents',
        'tenure', 'PhoneService', 'PaperlessBilling',
@@ -477,6 +514,7 @@ print('\nMost Negative Correlations: \n', negative_correlations)
 
 
 #Step 10.4. Plot positive & negative correlation with Response Variable-----------------------------
+print("  Plotting correlation bar chart...")
 
 correlations = dataset2.corrwith(dataset.Churn)
 correlations = correlations[correlations!=1]
@@ -486,11 +524,15 @@ correlations.plot.bar(
         rot = 45, grid = True)
 
 plt.title('Correlation with Churn Rate \n',horizontalalignment="center", fontstyle = "normal", fontsize = "22", fontfamily = "sans-serif")
+plt.savefig('outputs/08_correlation_with_churn.png', dpi=100, bbox_inches='tight')
+plt.close()
+print("  ✓ Saved: outputs/08_correlation_with_churn.png")
 
 
 
 
 #Step 9.5. Plot Correlation Matrix of all independent variables------------------------
+print("Step 9.5: Plotting correlation matrix...")
 
 ## Set and compute the Correlation Matrix
 sn.set(style="white")
@@ -507,11 +549,15 @@ cmap = sn.diverging_palette(220, 10, as_cmap=True)
 # Draw the heatmap with the mask and correct aspect ratio
 sn.heatmap(corr, mask=mask, cmap=cmap, vmax=.3, center=0,
             square=True, linewidths=.5, cbar_kws={"shrink": .5})
+plt.savefig('outputs/09_correlation_matrix.png', dpi=100, bbox_inches='tight')
+plt.close()
+print("  ✓ Saved: outputs/09_correlation_matrix.png")
 
 
 
 
 #Step 9.6: Check Multicolinearity using VIF----------------------------------------------
+print("Step 9.6: Checking multicollinearity (VIF)...")
 
 def calc_vif(X):
 
@@ -536,6 +582,9 @@ dataset2[['MonthlyCharges', 'TotalCharges']].plot.scatter(figsize = (15, 10), x 
 
 
 plt.title('Co-linearity of Monthly Charges and Total Charges \n',horizontalalignment="center", fontstyle = "normal", fontsize = "22", fontfamily = "sans-serif")
+plt.savefig('outputs/10_collinearity_charges.png', dpi=100, bbox_inches='tight')
+plt.close()
+print("  ✓ Saved: outputs/10_collinearity_charges.png")
 
 #dropping TotalCharges:
     
@@ -555,6 +604,7 @@ dataset = dataset.drop(columns = "TotalCharges")
 
 
 #Step 10: Encode Categorical data----------------------------------------------------------------
+print("\n=== Step 10: Encoding categorical variables ===")
 
 #Incase if user_id is an object:
     
@@ -569,18 +619,22 @@ dataset= pd.get_dummies(dataset)
 #Rejoin userid to dataset (column concatenation)
 
 dataset = pd.concat([dataset, identity], axis = 1)
+print(f"  ✓ Created {dataset.shape[1]-1} features after encoding")
  
 
 
 #Step 11: Split dataset into dependent and independent variables-----------------------------------
+print("\n=== Step 11: Separating features and target ===")
 
 #identify response variable:
     
 response = dataset["Churn"]
 
 dataset = dataset.drop(columns="Churn")
+print("  ✓ Separated target variable 'Churn'")
 
 #Step 12: Generate training and test datasets of dependent and independent variables-----------------
+print("\n=== Step 12: Splitting into train/test sets ===")
 
 
 X_train, X_test, y_train, y_test = train_test_split(dataset, response,
@@ -596,17 +650,19 @@ print("Number transactions X_test dataset: ", X_test.shape)
 print("Number transactions y_test dataset: ", y_test.shape)
 
 
-
 # Step 13: Removing Identifiers-------------------------------------------------------------------
+print("\n=== Step 13: Removing identifiers from features ===")
 
 train_identity = X_train['customerID']
 X_train = X_train.drop(columns = ['customerID'])
 
 test_identity = X_test['customerID']
 X_test = X_test.drop(columns = ['customerID'])
+print("  ✓ Customer IDs removed and saved separately")
 
 
 # Step 14: Feature Scaling-----------------------------------------------------------------------
+print("\n=== Step 14: Scaling features ===")
 
 sc_X = StandardScaler()
 X_train2 = pd.DataFrame(sc_X.fit_transform(X_train))
@@ -618,15 +674,22 @@ X_test2 = pd.DataFrame(sc_X.transform(X_test))
 X_test2.columns = X_test.columns.values
 X_test2.index = X_test.index.values
 X_test = X_test2
+print("  ✓ Feature scaling completed")
 
 
 
 #----------------------------------------------------------------------------------------
 #-----------------Section C: Model Selection------------------------------------------
 #----------------------------------------------------------------------------------------
+print("\n" + "="*80)
+print("SECTION C: MODEL SELECTION")
+print("="*80)
 
 #Step 15.1: Compare Baseline Classification Algorithms - First Iteration
 #Using Accuracy and ROC AUC Mean Metrics
+print("\n=== Step 15.1: Comparing baseline models (10-fold CV) ===")
+print("This may take a few minutes...")
+
 
 
 models = []
@@ -669,6 +732,7 @@ model_results = pd.DataFrame(columns=col)
 i = 0
 # evaluate each model using k-fold cross-validation
 for name, model in models:
+    print(f"  Training {name}...")
     kfold = model_selection.KFold(
         n_splits=10, shuffle=True, random_state=0)  # 10-fold cross-validation
 
@@ -688,12 +752,18 @@ for name, model in models:
                          round(cv_acc_results.std()*100, 2)
                          ]
     i += 1
-    
-model_results.sort_values(by=['ROC AUC Mean'], ascending=False)
+
+print("\n✓ Model comparison completed!")
+print("\nModel Results:")
+print(model_results.sort_values(by=['ROC AUC Mean'], ascending=False).to_string())
+
+# Save results to file
+model_results.sort_values(by=['ROC AUC Mean'], ascending=False).to_csv('outputs/model_comparison_results.csv', index=False)
+print("\n  ✓ Saved: outputs/model_comparison_results.csv")
 
 
 #Step 15.2.  Visualize Classification Algorithms Accuracy Comparisons:-----------------------------------
-
+print("\nStep 15.2: Creating visualization plots...")
   
   
 #Using Accuracy Mean:
@@ -709,8 +779,9 @@ plt.title('Accuracy Score Comparison \n',horizontalalignment="center", fontstyle
 #plt.legend(loc='top right', fontsize = "medium")
 plt.xticks(rotation=0, horizontalalignment="center")
 plt.yticks(rotation=0, horizontalalignment="right")
-
-plt.show()
+plt.savefig('outputs/11_accuracy_comparison.png', dpi=100, bbox_inches='tight')
+plt.close()
+print("  ✓ Saved: outputs/11_accuracy_comparison.png")
 
 
 #using Area under ROC Curve:
@@ -726,9 +797,9 @@ plt.title('ROC AUC Comparison \n',horizontalalignment="center", fontstyle = "nor
 #plt.legend(loc='top right', fontsize = "medium")
 plt.xticks(rotation=0, horizontalalignment="center")
 plt.yticks(rotation=0, horizontalalignment="right")
-
-
-plt.show()
+plt.savefig('outputs/12_roc_auc_comparison.png', dpi=100, bbox_inches='tight')
+plt.close()
+print("  ✓ Saved: outputs/12_roc_auc_comparison.png")
 
 
 #------------------------------------------------------------------------------------------
@@ -758,9 +829,9 @@ plt.title('Optimal Number of K Neighbors \n',horizontalalignment="center", fonts
 #plt.legend(loc='top right', fontsize = "medium")
 plt.xticks(rotation=0, horizontalalignment="center")
 plt.yticks(rotation=0, horizontalalignment="right")
-
-
-plt.show()
+plt.savefig('outputs/13_optimal_k_neighbors.png', dpi=100, bbox_inches='tight')
+plt.close()
+print("  ✓ Saved: outputs/13_optimal_k_neighbors.png")
 
 #optimal number of K neigbors = 22
 
@@ -782,17 +853,19 @@ plt.title('Optimal Number of Trees for Random Forest Model \n',horizontalalignme
 #plt.legend(loc='top right', fontsize = "medium")
 plt.xticks(rotation=0, horizontalalignment="center")
 plt.yticks(rotation=0, horizontalalignment="right")
-
-
-plt.show()
+plt.savefig('outputs/14_optimal_trees_random_forest.png', dpi=100, bbox_inches='tight')
+plt.close()
+print("  ✓ Saved: outputs/14_optimal_trees_random_forest.png")
  
  
 #Optimal number of decision trees = 72
 
  
 #Step 15.4. Compare Baseline Classification Algorithms - Second Iteration-----------------------------
+print("\n=== Step 15.4: Detailed model evaluation on test set ===")
 
 #--Step 15.4.1. Logistic Regression-----------------
+print("  Evaluating Logistic Regression...")
 
 # Fitting Logistic Regression to the Training set 
 classifier = LogisticRegression(random_state = 0)
@@ -836,7 +909,7 @@ f2 = fbeta_score(y_test, y_pred, beta=2.0)
 model_results = pd.DataFrame([['SVM (Linear)', acc, prec, rec, f1, f2]],
                columns = ['Model', 'Accuracy', 'Precision', 'Recall', 'F1 Score', 'F2 Score'])
 
-results = results.append(model_results, ignore_index = True)
+results = pd.concat([results, model_results], ignore_index=True)
 
 
 #Step 15.4.3. K-Nearest Neighbours------------------------
@@ -860,7 +933,7 @@ f2 = fbeta_score(y_test, y_pred, beta=2.0)
 model_results = pd.DataFrame([['K-Nearest Neighbours', acc, prec, rec, f1, f2]],
                columns = ['Model', 'Accuracy', 'Precision', 'Recall', 'F1 Score', 'F2 Score'])
 
-results = results.append(model_results, ignore_index = True)
+results = pd.concat([results, model_results], ignore_index=True)
 
 
 
@@ -885,7 +958,7 @@ f2 = fbeta_score(y_test, y_pred, beta=2.0)
 model_results = pd.DataFrame([['Kernel SVM', acc, prec, rec, f1, f2]],
                columns = ['Model', 'Accuracy', 'Precision', 'Recall', 'F1 Score', 'F2 Score'])
 
-results = results.append(model_results, ignore_index = True)
+results = pd.concat([results, model_results], ignore_index=True)
 
 
 #Step 15.4.5.  Naive Byes------------------------------------------------
@@ -908,7 +981,7 @@ f2 = fbeta_score(y_test, y_pred, beta=2.0)
 model_results = pd.DataFrame([['Naive Byes', acc, prec, rec, f1, f2]],
                 columns = ['Model', 'Accuracy', 'Precision', 'Recall', 'F1 Score', 'F2 Score'])
 
-results = results.append(model_results, ignore_index = True)
+results = pd.concat([results, model_results], ignore_index=True)
 
 
 
@@ -934,7 +1007,7 @@ f2 = fbeta_score(y_test, y_pred, beta=2.0)
 model_results = pd.DataFrame([['Decision Tree', acc, prec, rec, f1, f2]],
                columns = ['Model', 'Accuracy', 'Precision', 'Recall', 'F1 Score', 'F2 Score'])
 
-results = results.append(model_results, ignore_index = True)
+results = pd.concat([results, model_results], ignore_index=True)
 
 
 #Step 15.4.7. Random Forest--------------------------------------------
@@ -962,7 +1035,7 @@ f2 = fbeta_score(y_test, y_pred, beta=2.0)
 model_results = pd.DataFrame([['Random Forest', acc, prec, rec, f1, f2]],
                columns = ['Model', 'Accuracy', 'Precision', 'Recall', 'F1 Score', 'F2 Score'])
 
-results = results.append(model_results, ignore_index = True)
+results = pd.concat([results, model_results], ignore_index=True)
 
 #Step 15.5. Visualize the results and compare the baseline algorithms----------------------------------
 
@@ -1068,8 +1141,9 @@ plt.title('ROC Graph \n',horizontalalignment="center", fontstyle = "normal", fon
 plt.legend(loc="lower right", fontsize = "medium")
 plt.xticks(rotation=0, horizontalalignment="center")
 plt.yticks(rotation=0, horizontalalignment="right")
-
-plt.show()
+plt.savefig('outputs/15_roc_curve.png', dpi=100, bbox_inches='tight')
+plt.close()
+print("  ✓ Saved: outputs/15_roc_curve.png")
 
 
 
