@@ -1181,7 +1181,10 @@ C = [0.001, 0.01, 0.1, 1, 10, 100, 1000]
 # Combine Parameters
 parameters = dict(C=C, penalty=penalty)
 
-lr_classifier = GridSearchCV(estimator = classifier,
+# Use liblinear solver which supports both l1 and l2 penalties
+# Increase max_iter to ensure convergence
+classifier_tuned = LogisticRegression(random_state=0, solver='liblinear', max_iter=1000)
+lr_classifier = GridSearchCV(estimator = classifier_tuned,
                            param_grid = parameters,
                            scoring = "balanced_accuracy",
                            cv = 10,
